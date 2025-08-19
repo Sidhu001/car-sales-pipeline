@@ -1,0 +1,9 @@
+{
+	"name": "adf-kuro",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "03ddc1f8-885e-4af3-9bf1-42faa20fe0d4",
+		"tenantId": "54fd9de9-f550-4861-86fa-b914e479bd7d"
+	}
+}

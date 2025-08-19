@@ -40,7 +40,7 @@
 				"description": "This pipeline will load the raw data into sqldb",
 				"activities": [
 					{
-						"name": "Copy data1",
+						"name": "Api-Data-Ingestion",
 						"type": "Copy",
 						"dependsOn": [],
 						"policy": {

@@ -276,7 +276,7 @@
 				}
 			},
 			{
-				"name": "WatermarkUpdare",
+				"name": "WatermarkUpdate",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
@@ -297,8 +297,10 @@
 				"typeProperties": {
 					"storedProcedureName": "[dbo].[UpdateWatermarkTable]",
 					"storedProcedureParameters": {
-						"value": "@activity('current_load').output.firstRow.max_date",
-						"type": "Expression"
+						"lastload": {
+							"value": "@activity('current_load').output.firstRow.max_date",
+							"type": "String"
+						}
 					}
 				},
 				"linkedServiceName": {
@@ -307,6 +309,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"lastload": {
+				"type": "String",
+				"defaultValue": "@activity('current_load').output.firstRow.max_date"
+			}
+		},
 		"annotations": [],
 		"lastPublishTime": "2025-08-19T17:59:06Z"
 	},

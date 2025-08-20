@@ -40,9 +40,22 @@
 				"description": "This pipeline will load the raw data into sqldb",
 				"activities": [
 					{
-						"name": "Api-Data-Ingestion",
+						"name": "Copy_Increm_Data",
 						"type": "Copy",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "last_load",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "current_load",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -53,14 +66,13 @@
 						"userProperties": [],
 						"typeProperties": {
 							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "HttpReadSettings",
-									"requestMethod": "GET"
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "SELECT * FROM source_cars_data WHERE Date_id > @{activity('last_load').output} AND Date_id <= @{activity('current_load').output}",
+									"type": "Expression"
 								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
 							},
 							"sink": {
 								"type": "AzureSqlSink",
@@ -226,10 +238,10 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "githubg_source",
+								"referenceName": "ds_sqldb",
 								"type": "DatasetReference",
 								"parameters": {
-									"file_name": "SalesData.csv"
+									"table_name": "source_cars_data"
 								}
 							}
 						],
@@ -237,9 +249,67 @@
 							{
 								"referenceName": "ds_sqldb",
 								"type": "DatasetReference",
-								"parameters": {}
+								"parameters": {
+									"table_name": "source_cars_data"
+								}
 							}
 						]
+					},
+					{
+						"name": "last_load",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "SELECT last_load FROM water_table;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_sqldb",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": "water_table"
+								}
+							}
+						}
+					},
+					{
+						"name": "current_load",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "select max(Date_Id) as max_date from source_cars_data;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_sqldb",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": "source_cars_data"
+								}
+							}
+						}
 					}
 				],
 				"policy": {
@@ -249,7 +319,6 @@
 				"lastPublishTime": "2025-08-19T17:59:06Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/githubg_source')]",
 				"[concat(variables('factoryId'), '/datasets/ds_sqldb')]"
 			]
 		},
@@ -262,12 +331,20 @@
 					"referenceName": "ls_sqlDb",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"table_name": {
+						"type": "string"
+					}
+				},
 				"annotations": [],
 				"type": "AzureSqlTable",
 				"schema": [],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "source_cars_data"
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
 				}
 			},
 			"dependsOn": [

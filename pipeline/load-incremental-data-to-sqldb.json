@@ -1,5 +1,5 @@
 {
-	"name": "load-data-to-sqldb",
+	"name": "load-incremental-data-to-sqldb",
 	"properties": {
 		"description": "This pipeline will load the raw data into sqldb",
 		"activities": [
@@ -39,10 +39,13 @@
 						"partitionOption": "None"
 					},
 					"sink": {
-						"type": "AzureSqlSink",
-						"writeBehavior": "insert",
-						"sqlWriterUseTableLock": false,
-						"disableMetricsCollection": false
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
 					},
 					"enableStaging": false,
 					"translator": {
@@ -211,11 +214,8 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_sqldb",
-						"type": "DatasetReference",
-						"parameters": {
-							"table_name": "source_cars_data"
-						}
+						"referenceName": "ds_bronze",
+						"type": "DatasetReference"
 					}
 				]
 			},
